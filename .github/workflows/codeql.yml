@@ -1,0 +1,47 @@
+---
+name: "CodeQL"
+
+on:
+  push:
+    branches: [ "develop" ]
+  pull_request:
+    branches: [ "develop" ]
+
+jobs:
+  analyse:
+    name: Analyse (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      packages: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - language: java-kotlin
+          build-mode: autobuild
+          source-root: android
+        - language: python
+          build-mode: none
+          source-root: python
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Create google-services.json
+      if: matrix.language == 'java-kotlin'
+      run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > ${{ matrix.source-root }}/app/google-services.json
+
+    - name: Initialise CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        build-mode: ${{ matrix.build-mode }}
+        source-root: ${{ matrix.source-root }}
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{matrix.language}}"

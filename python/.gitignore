@@ -1,0 +1,71 @@
+# Byte-compiled / optimised / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+env/
+venv/
+build/
+dist/
+eggs/
+*.egg-info/
+.tox/
+*.egg
+
+# Installers
+*.exe
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Log files
+*.log
+
+# Database files
+*.sqlite
+*.sqlite3
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Editor and IDE related files
+.idea/
+*.swp
+*~
+.vscode/
+
+# Dependency caches
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Coverage data
+.coverage
+coverage.xml
+
+# Documentation
+docs/_build/
+
+# Secrets or configuration files
+*.secrets.json
+*key.json
+*.ini
+#*.conf
+config.ini
+config.json
+
+# If using Poetry
+poetry.lock
+
+# If using pip-tools
+#requirements.txt
+requirements.in
+
+# Any files that are created during runtime and should not be tracked
+/tmp/

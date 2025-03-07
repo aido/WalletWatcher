@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Wallet Watcher</string>
+    <string name="default_notification_channel_id" translatable="false">walletwatcher_channel</string>
+    <string name="default_notification_channel_name" translatable="true">Wallet Watcher</string>
+    <string name="default_notification_channel_description" translatable="true">Channel for Wallet Watcher notifications</string>
+    <string name="launcher_icon" translatable="true">Wallet icon</string>
+    <string name="launcher_button" translatable="true">OK</string>
+    <string name="launcher_status_service_started" translatable="true">Service has started.</string>
+    <string name="launcher_status_service_running" translatable="true">Service is running.</string>
+    <string name="launcher_status_service_stopped" translatable="true">Service is stopped.</string>
+    <string name="launcher_status_service_not_started" translatable="true">Service has not started.</string>
+    <string name="launcher_message_cannot_display_notifications" translatable="true">Wallet Watcher cannot display notifications without permission.</string>
+    <string name="launcher_message_granted_notifications" translatable="true">Wallet Watcher has been granted notification permissions and will now be able to display notifications.</string>
+    <string name="launcher_message_has_notifications" translatable="true">Wallet Watcher has notification permission.</string>
+    <string name="launcher_message_requires_notifications" translatable="true">Wallet Watcher requires notification permissions.\nIf not already granted, please do so.</string>
+    <string name="notification_title_fcm_token" translatable="true">New FCM Token</string>
+</resources>

@@ -1,0 +1,2 @@
+include src/walletwatcher/config/walletwatcher.conf
+include src/walletwatcher/systemd/wallet-watcher.service

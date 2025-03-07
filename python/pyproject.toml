@@ -1,0 +1,20 @@
+[project]
+name = "python-walletwatcher"
+version = "0.0.1"
+description = "A Python application that periodically checks a Bitcoin wallet's balance and sends real-time notifications via Firebase Cloud Messaging (FCM) when the balance changes."
+authors = [
+    { name = "aido", email = "aido@users.noreply.github.com" },
+]
+dependencies = [
+    "aiohttp>=3.11.0",
+    "cysystemd>=2.0.1",
+    "google-auth-oauthlib>=1.2.0"
+]
+requires-python = ">=3.8"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project.scripts]
+walletwatcher = "walletwatcher.walletwatcher:main"
