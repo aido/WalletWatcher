@@ -85,6 +85,8 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.firebase.messaging.ktx)
     implementation(libs.firebase.analytics.ktx)
+    implementation(libs.firebase.auth.ktx)
+    implementation (libs.firebase.firestore.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.activity)

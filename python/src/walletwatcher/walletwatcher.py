@@ -5,7 +5,7 @@ import signal
 import logging
 from cysystemd.daemon import notify, Notification
 from walletwatcher.pidmanager import PidManager
-from walletwatcher.fcm_api import FCMAPI, FCMAPIValueError, FCMAPIInitError
+from walletwatcher.firebase import Firebase, FirebaseInitError, FirebaseValueError
 from walletwatcher.bitcoin_wallet import BitcoinWallet, BitcoinWalletValueError, BitcoinWalletInitError
 
 class WalletWatcher:
@@ -55,7 +55,7 @@ async def async_main():
     if watcher.is_systemd:
         notify(Notification.READY)
 
-    async def heartbeat_task(fcm_api, bitcoin):
+    async def heartbeat_task(firebase, bitcoin):
         while watcher.is_watching:
             try:
                 if bitcoin.is_scanning:
@@ -65,11 +65,11 @@ async def async_main():
                     notificationBody = "Watching"
                     notificationColor =  "#00FF00"
 
-                await fcm_api.send_notification(title = "Status",
+                await firebase.send_notification(title = "Status",
                                                 body = notificationBody,
                                                 icon = "ic_heartbeat",
                                                 color = notificationColor,
-                                                notification_priority = "PRIORITY_DEFAULT")
+                                                priority = "default")
 
             except Exception as e:
                 logging.error(f"Heartbeat notification failed: {e}")
@@ -80,15 +80,15 @@ async def async_main():
             except asyncio.CancelledError:
                 break
 
-        await fcm_api.send_notification(title = "Status",
+        await firebase.send_notification(title = "Status",
                                         body = "Not watching",
                                         icon = "ic_heartbeat",
                                         color = "#FF0000",
-                                        notification_priority = "PRIORITY_DEFAULT")
+                                        priority = "default")
 
     try:
-        # Initialise the FCMAPI instance
-        fcm_api = FCMAPI()
+        # Initialise the Firebase instance
+        firebase = Firebase()
 
         # Initialise the BitcoinWallet instance
         bitcoin = BitcoinWallet()
@@ -98,7 +98,7 @@ async def async_main():
         watcher.is_watching = True
 
         # Start heartbeat task
-        heartbeat_task_instance = asyncio.create_task(heartbeat_task(fcm_api, bitcoin))
+        heartbeat_task_instance = asyncio.create_task(heartbeat_task(firebase, bitcoin))
 
         while watcher.is_watching:
             try:
@@ -114,11 +114,11 @@ async def async_main():
                             notificationBody = "Bitcoin balance has decreased"
                             notificationColor = "#FF0000"
 
-                        await fcm_api.send_notification(title="Balance Alert",
+                        await firebase.send_notification(title="Balance Alert",
                                                         body=notificationBody,
                                                         icon = "ic_bitcoin",
                                                         color=notificationColor,
-                                                        notification_priority="PRIORITY_MAX")
+                                                        priority="max")
                 if watcher.is_systemd:
                     notify(Notification.WATCHDOG)
 
@@ -127,22 +127,22 @@ async def async_main():
                 except asyncio.CancelledError:
                     break
 
-            except (BitcoinWalletValueError, FCMAPIValueError) as ve:
+            except (BitcoinWalletValueError, FirebaseValueError) as ve:
                 logging.error(f"Configuration error during loop: {ve}")
                 # Continue the while loop
                 continue
 
-    except (FCMAPIInitError) as re:
-        logging.exception(f"FCMAPI initialisation error: {re}")
+    except (FirebaseInitError) as re:
+        logging.exception(f"Firebase initialisation error: {re}")
         return 1
 
     except (BitcoinWalletInitError) as re:
         logging.exception(f"Bitcoin wallet initialisation error: {re}")
-        await fcm_api.send_notification(title = "Status",
+        await firebase.send_notification(title = "Status",
                                         body = "Bitcoin wallet failed to initialise.\nWatcher has stopped",
                                         icon = "ic_bitcoin",
                                         color = "#FF0000",
-                                        notification_priority = "PRIORITY_DEFAULT")
+                                        priority = "default")
         return 1
 
     except Exception as e:
@@ -150,11 +150,11 @@ async def async_main():
         return 1
 
     else:
-        await fcm_api.send_notification(title = "Status",
+        await firebase.send_notification(title = "Status",
                                         body = "Watcher has stopped",
                                         icon = "ic_eye",
                                         color = "#FF0000",
-                                        notification_priority = "PRIORITY_DEFAULT")
+                                        priority = "default")
         logging.info("WalletWatcher stopped.")
         return 0 
 

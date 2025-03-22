@@ -8,7 +8,7 @@ authors = [
 dependencies = [
     "aiohttp>=3.11.0",
     "cysystemd>=2.0.1",
-    "google-auth-oauthlib>=1.2.0"
+    "firebase-admin>=6.7.0"
 ]
 requires-python = ">=3.8"
 

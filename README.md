@@ -52,13 +52,21 @@ Here's a diagram illustrating the connectivity between the various components:
 graph TB
     1["fa:fa-wallet Cold Wallet"] -->|xpub| 2.1;
     subgraph 2["fa:fa-server Secure Server"]
-       2.1["fa:fa-bitcoin-sign Bitcoin Core Node"] <-->|RPC| 2.2["fa:fa-python Wallet Watcher Python Script"];
+        2.1["fa:fa-bitcoin-sign Bitcoin Core Node"]
+        2.2["fa:fa-python Wallet Watcher Python Script"];
     end
-    2.2 <-->|RPC| 3["fa:fa-server Firebase Cloud Messaging"];
-    3 -->|Notifications| 4.1
+    subgraph 3["fa:fa-cloud Cloud"]
+        3.1["fa:fa-server Firebase Cloud Messaging"];
+        3.2(fa:fa-database Firestore Database):::database
+    end
     subgraph 4["fa:fa-mobile-screen-button Mobile Device"]
-       4.1["fa:fa-android Wallet Watcher App"];
+        4.1["fa:fa-android Wallet Watcher App"];
     end
+    2.1 <-->|RPC| 2.2
+    2.2 <-->|RPC| 3.1;
+    2.2 <-->|RPC| 3.2;
+    3.1 -->|Notification| 4.1;
+    3.2 <-->|Token| 4.1;
 ```
 
 ## Contributing

@@ -23,17 +23,57 @@ A Python application that periodically checks a Bitcoin wallet's balance and sen
 * A Bitcoin wallet address
 * Configuration files for FCM credentials and Bitcoin wallet details
 
+## Setting Up a Firebase Project
+
+1.  **Go to the Firebase Console:** Navigate to [https://console.firebase.google.com/](https://console.firebase.google.com/).
+2.  **Create a New Project:** Click "Add project".
+3.  **Enter Project Details:**
+    * Enter a project name.
+    * Accept the Firebase terms.
+    * Click "Continue".
+4.  **Configure Google Analytics (Optional):**
+    * You can enable Google Analytics for your project if you want to track usage.
+    * If not, you can disable it and click "Create project".
+5.  **Wait for Project Creation:** Firebase will create your project. This might take a few moments.
+6.  **Enable Cloud Messaging (FCM):**
+    * Once your project is created, click "Continue".
+    * In the Firebase console, go to "Project settings" (gear icon in the top left).
+    * Go to the "Cloud Messaging" tab.
+    * Note the "Server key" (you might need this for some configurations, though the service account is preferred).
+7.  **Enable Firestore (if needed):**
+    * The Android application stores FCM tokens in Firestore, go to "Firestore Database" in the Firebase console.
+    * Click "Create database".
+    * Choose "Start in production mode" or "Start in test mode" based on your needs.
+    * Select a location for your Firestore database.
+    * Click "Enable".
+
 ## Obtaining `service-account-key.json`
 
-To enable FCM notifications, you'll need a service account key file from your Firebase project:
+To enable FCM notifications, you'll need a service account key file from your Google Cloud project:
 
-1.  **Go to the Firebase Console:** Navigate to your Firebase project at [https://console.firebase.google.com/](https://console.firebase.google.com/).
+1.  **Go to the Google Cloud Console:** Navigate to your Google Cloud project at [https://console.cloud.google.com/](https://console.cloud.google.com/).
 2.  **Select Your Project:** Choose the project you want to use.
-3.  **Project Settings:** Click the gear icon in the top left corner and select "Project settings".
-4.  **Service Accounts Tab:** Go to the "Service accounts" tab.
-5.  **Generate New Private Key:** Click the "Generate new private key" button.
-6.  **Download the Key:** A `service-account-key.json` file will be downloaded to your computer.
-7.  **Place the Key:** Move this file to the same directory as your `walletwatcher.conf` file, or adjust the path in your configuration accordingly.
+3.  **Service Accounts:** Navigate to "IAM & Admin" > "Service Accounts".
+4.  **Create Service Account:** Click "+ CREATE SERVICE ACCOUNT".
+5.  **Grant Access:** Give the service account the "Firebase Admin SDK Administrator Service Agent" role, or create a custom role (see below).
+6.  **Create Key:** Under the "Keys" tab, click "ADD KEY" > "Create new key".
+7.  **Download JSON:** Select "JSON" as the key type and click "CREATE". A `service-account-key.json` file will be downloaded.
+8.  **Place the Key:** Move this file to `/etc/walletwatcher/`, or adjust the path in your configuration accordingly.
+
+## Least Privilege Access
+
+To read the FCM tokens stored in Firestore by the mobile device the Python service account needs the "Firebase Admin SDK Administrator Service Agent" role. But for more fine-grained, least privilege access, create a custom role in the Google Cloud Console:
+
+1.  **Go to IAM & Admin > Roles:** [https://console.cloud.google.com/iam-admin/roles](https://console.cloud.google.com/iam-admin/roles)
+2.  **Create Role:** Click "+ CREATE ROLE".
+3.  **Give it a name:** e.g. "Python Script".
+4.  **Add Permissions:** Add the following permissions:
+    * `cloudmessaging.messages.create`
+    * `datastore.entities.get`
+5.  **Save Role:** Click "CREATE".
+6.  When creating the service account, assign this custom role instead of "Firebase Admin SDK Administrator Service Agent".
+
+With these permissions, the Python script will only have the necessary access to read FCM tokens from Firestore and send notifications, nothing more.
 
 ## Installation
 
@@ -51,7 +91,7 @@ To enable FCM notifications, you'll need a service account key file from your Fi
     source venv/bin/activate
     ```
 
-2.  Build the package:
+3.  Build the package:
 
     ```bash
     python3 -m build
@@ -127,9 +167,9 @@ To enable FCM notifications, you'll need a service account key file from your Fi
 
 ## Dependencies
 
-* aiohttp
-* cysystemd
-* google-auth-oauthlib
+* aiohttp>=3.11.0
+* cysystemd>=2.0.1
+* firebase-admin>=6.7.0
 
 ## Contributing
 

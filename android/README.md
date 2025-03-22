@@ -8,24 +8,22 @@ WalletWatcher is an Android application designed to enable cold wallet balance n
 
 ## Features
 
-**FCM Notifications:** Stay informed about your cryptocurrency wallet activity with real-time push notifications. Get alerts for changes in the balance of a cold wallet, or other significant events.
+* **FCM Notifications:** Stay informed about your cryptocurrency wallet activity with real-time push notifications. Get alerts for changes in the balance of a cold wallet, or other significant events.
 * **FCM Token Display:** When the device is rebooted after the app is installed, the app receives an FCM token. This token is then displayed as a notification.
-* **Secure FCM Token Storage:** Your Firebase Cloud Messaging (FCM) tokens are stored securely on your device using Android's SharedPreferences, ensuring that your notification preferences are protected
-* **FCM Token Viewing via ADB:** The stored FCM token can be viewed using Android Debug Bridge (ADB).
+* **Secure FCM Token Storage:** Your Firebase Cloud Messaging (FCM) tokens are stored securely in Cloud Firestore, ensuring that your notification preferences are protected.
 * **Companion Application Integration:** The FCM token is used in the configuration of the Python companion application running on a Bitcoin Core node, enabling push notifications from the node to this Android app. See the [Python README](../python/README.md) for detailed instructions.
-
 
 ## Technologies Used
 
 * **Kotlin:** The app is built using Kotlin, a modern, concise, and safe programming language that is fully supported by Google for Android development.
 * **Android SDK:** The foundation of the app is the Android Software Development Kit, providing the necessary tools and libraries for building native Android applications.
 * **Firebase Cloud Messaging (FCM):** We use Firebase Cloud Messaging to receive and handle notifications.
-* **FCM Token Persistence:** The received FCM token is stored securely using Android's SharedPreferences, allowing it to persist across app sessions and device reboots.
+* **Cloud Firestore:** The received FCM token is stored securely in Cloud Firestore, allowing it to persist across app sessions and device reboots.
 * **Gradle:** Gradle is the build system used to manage dependencies, compile the code, and package the app for distribution.
 
 ## Firebase Setup
 
-This app uses Firebase Cloud Messaging (FCM) to receive FCM tokens. Here's how to set up a Firebase project and enable FCM:
+This app uses Firebase Cloud Messaging (FCM) and Cloud Firestore. Here's how to set up a Firebase project and enable FCM and Firestore:
 
 1.  **Create a Firebase Project:**
     * Go to the [Firebase console](https://console.firebase.google.com/).
@@ -38,8 +36,56 @@ This app uses Firebase Cloud Messaging (FCM) to receive FCM tokens. Here's how t
 3.  **Enable Cloud Messaging:**
     * In your Firebase project, go to "Cloud Messaging" under the "Engage" section.
     * Make sure the Cloud Messaging API is enabled.
-4.  **Place `google-services.json`:**
+4.  **Enable Firestore:**
+    * In your Firebase project, go to "Firestore Database" under the "Build" section.
+    * Click "Create database."
+    * Choose "Start in production mode" or "Start in test mode" based on your needs.
+    * Select a location for your Firestore database.
+    * Click "Enable."
+5.  **Place `google-services.json`:**
     * Move the downloaded `google-services.json` file into the `app/` directory of your Android project.
+6.  **Enable Anonymous Authentication in Firebase Console:**
+    * Open your Firebase project in the Firebase console.
+    * In the left-hand menu, click on "Authentication."
+    * Select the "Sign-in method" tab.
+    * Find the "Anonymous" sign-in provider.
+    * Toggle the switch to enable it.
+    * Make sure to save your changes.
+
+## Google Cloud Setup
+
+1.  **Grant Service Account Token Creator Role:**
+    * To allow the Android application to create FCM tokens, you need to grant the "Service Account Token Creator" role.
+    * Go to the [Google Cloud Console](https://console.cloud.google.com/).
+    * Navigate to "IAM & Admin" > "IAM".
+    * Locate the service account associated with your Firebase project.
+    * Click the pencil icon to edit permissions.
+    * Click "ADD ANOTHER ROLE".
+    * Search for and select "Service Account Token Creator".
+    * Click "Save".
+2.  **Firestore Security Rules:**
+    * The default Firestore rules are restrictive. To allow the Android app to write FCM tokens, update the rules:
+        ```rules
+        rules_version = '2';
+        service cloud.firestore {
+            match /databases/{database}/documents {
+                match /fcm_tokens/{deviceId} {
+                    // Deny delete and read
+                    allow delete, read: if false;
+                    // Allow only Wallet Watcher app to write tokens
+                    allow create, update: if request.auth != null
+                                        && request.auth.token.aud == "YOUR_PROJECT_ID"
+                                        && request.resource.data.timestamp is timestamp
+                                        && request.resource.data.token is string;
+                }
+                match /{document=**} {
+                    allow read, write: if false;
+                }
+            }
+        }
+        ```
+    * Replace `YOUR_PROJECT_ID` with your actual Firebase project ID.
+    * These rules allow only authenticated requests from your app to write tokens, ensuring security.
 
 ## Getting Started
 
@@ -49,7 +95,7 @@ These instructions will get a copy of the project up and running on your local m
 
 * Android Studio installed.
 * Android SDK set up.
-* A Firebase project set up with FCM enabled (see "Firebase Setup" above).
+* A Firebase project set up with FCM and Firestore enabled (see "Firebase Setup" above).
 * A `google-services.json` file downloaded from your Firebase project and placed in the `app/` directory.
 
 ### Building and Running
@@ -64,20 +110,12 @@ These instructions will get a copy of the project up and running on your local m
 5.  **Run:** Run the app on an emulator or a physical device.
 6.  **Reboot Device:** After installing the app on the device or emulator, reboot it to trigger the FCM token generation.
 7.  **View Notification:** After reboot, a notification will display the FCM token.
-8.  **View Token via ADB:**
-    * Connect your device or emulator.
-    * Open a terminal.
-    * Run:
-        ```bash
-        adb shell
-        run-as aido.walletwatcher
-        cat shared_prefs/FCM_PREFS.xml
-        ```
 
 ## Security
 
-* **FCM Token Storage:** FCM tokens are stored securely using SharedPreferences locally on your device. This ensures that your notification preferences are protected.
+* **Firestore Storage:** FCM tokens are stored securely in Cloud Firestore.
 * **`google-services.json`:** The `google-services.json` file is excluded from version control and should be kept private. This file contains sensitive information about your Firebase project.
+* **Firestore Security Rules:** The provided Firestore rules ensure that only your application can write FCM tokens.
 
 ## Contributing
 
