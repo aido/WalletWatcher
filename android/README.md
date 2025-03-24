@@ -117,6 +117,32 @@ These instructions will get a copy of the project up and running on your local m
 * **`google-services.json`:** The `google-services.json` file is excluded from version control and should be kept private. This file contains sensitive information about your Firebase project.
 * **Firestore Security Rules:** The provided Firestore rules ensure that only your application can write FCM tokens.
 
+## Battery Optimization Warning
+
+Android's battery optimization features can sometimes interfere with the proper functioning of this app as a background service. If you experience issues such as:
+
+* Service unexpectedly stopping
+* App icon disappearing
+* Inconsistent background operation
+
+It's likely that battery optimization is affecting the app.
+
+**Recommended Action:**
+
+To ensure the app runs reliably, please exclude it from battery optimization:
+
+1.  Go to your device's **Settings**.
+2.  Navigate to **Apps**.
+3.  Find and select "Wallet Watcher".
+4.  Tap on **Battery**.
+5.  Choose **Battery optimization**.
+6.  Select **All apps** from the dropdown menu (if available).
+7.  Find "Wallet Watcher" in the list.
+8.  Select **Don't optimize**.
+
+> [!NOTE]
+> The exact steps might vary slightly depending on your Android version and device manufacturer.
+
 ## Contributing
 
 We welcome contributions! Please feel free to submit pull requests or open issues to discuss potential changes.

@@ -1,6 +1,5 @@
 package aido.walletwatcher
 
-import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.content.Context
 import android.provider.Settings.Secure
@@ -21,6 +20,7 @@ class FirebaseMessagingService : FirebaseMessagingService() {
         private const val TAG = "FirebaseMessagingService"
         private val DEFAULT_COLOUR = R.color.default_notification_color
         private val DEFAULT_ICON = R.drawable.ic_eye
+        private var isAuthenticating = false
     }
 
     private val db = FirebaseFirestore.getInstance()
@@ -54,7 +54,12 @@ class FirebaseMessagingService : FirebaseMessagingService() {
         synchronized(this) {
             if (authComplete) {
                 saveTokenToFirestore(token)
-                sendNotification(getString(R.string.notification_title_fcm_token), token, "#FFA500", R.drawable.ic_token)
+                sendNotification(
+                    getString(R.string.notification_title_fcm_token),
+                    token,
+                    "#FFA500",
+                    R.drawable.ic_token
+                )
             } else {
                 newToken = token // Store the latest token
             }
@@ -70,21 +75,31 @@ class FirebaseMessagingService : FirebaseMessagingService() {
                 synchronized(this) {
                     newToken?.let {
                         saveTokenToFirestore(it)
-                        sendNotification(getString(R.string.notification_title_fcm_token), it, "#FFA500", R.drawable.ic_token)
+                        sendNotification(
+                            getString(R.string.notification_title_fcm_token),
+                            it,
+                            "#FFA500",
+                            R.drawable.ic_token
+                        )
                         newToken = null
                     }
                 }
             } else {
                 Log.d(TAG, "AuthStateListener: User signed out")
                 authComplete = false
-                signInAnonymously()
+                if (!isAuthenticating) {
+                    signInAnonymously()
+                }
             }
         }
-        signInAnonymously()
+        if (auth.currentUser == null) {
+            signInAnonymously()
+        }
     }
 
     private fun signInAnonymously() {
         Log.d(TAG, "signInAnonymously called")
+        isAuthenticating = true
         auth.signInAnonymously()
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
@@ -92,10 +107,16 @@ class FirebaseMessagingService : FirebaseMessagingService() {
                 } else {
                     Log.w(TAG, "signInAnonymously:failure", task.exception)
                 }
+                isAuthenticating = false
             }
     }
 
-    private fun sendNotification(messageTitle: String, messageBody: String, messageColour: String, messageIcon: Int = DEFAULT_ICON) {
+    private fun sendNotification(
+        messageTitle: String,
+        messageBody: String,
+        messageColour: String,
+        messageIcon: Int = DEFAULT_ICON
+    ) {
         Log.d(TAG, "sendNotification called")
         val accentColour = try {
             messageColour.toColorInt()
@@ -103,16 +124,21 @@ class FirebaseMessagingService : FirebaseMessagingService() {
             Log.e(TAG, "Invalid colour format: $messageColour")
             getColor(DEFAULT_COLOUR)
         }
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val notificationBuilder = NotificationCompat.Builder(this, getString(aido.walletwatcher.Application.CHANNEL_ID))
-            .setContentTitle(messageTitle)
-            .setContentText(messageBody)
-            .setSmallIcon(messageIcon)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setDefaults(NotificationCompat.DEFAULT_ALL)
-            .setAutoCancel(true)
-            .setColor(accentColour)
-        notificationManager.notify(aido.walletwatcher.Application.NOTIFICATIONID_DEFAULT, notificationBuilder.build())
+        val notificationManager =
+            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationBuilder =
+            NotificationCompat.Builder(this, getString(aido.walletwatcher.Application.CHANNEL_ID))
+                .setContentTitle(messageTitle)
+                .setContentText(messageBody)
+                .setSmallIcon(messageIcon)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setDefaults(NotificationCompat.DEFAULT_ALL)
+                .setAutoCancel(true)
+                .setColor(accentColour)
+        notificationManager.notify(
+            aido.walletwatcher.Application.NOTIFICATIONID_DEFAULT,
+            notificationBuilder.build()
+        )
     }
 
     private fun saveTokenToFirestore(token: String) {

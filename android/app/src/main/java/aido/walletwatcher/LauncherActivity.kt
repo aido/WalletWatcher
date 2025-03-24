@@ -1,7 +1,6 @@
 package aido.walletwatcher
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -60,7 +59,7 @@ class LauncherActivity : AppCompatActivity() {
         val layoutParams = WindowManager.LayoutParams()
         layoutParams.copyFrom(window.attributes)
         layoutParams.width = (bounds.width() * 0.8).toInt()
-        layoutParams.height = (bounds.height() * 0.4).toInt()
+        layoutParams.height = (bounds.height() * 0.5).toInt()
         layoutParams.flags = layoutParams.flags or WindowManager.LayoutParams.FLAG_DIM_BEHIND
         layoutParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_PANEL
         window.attributes = layoutParams
