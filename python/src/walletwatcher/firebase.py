@@ -31,7 +31,6 @@ class Firebase:
             self.device_id = config_get("firebase", "device_id")
             self.collection = config_get("firebase", "collection")
             self.credentials = None
-            self.service_account_email = None
             self.db = None
             self.fcm_token = None
 
@@ -75,13 +74,6 @@ class Firebase:
                     try:
                         self.credentials = credentials.Certificate(path)
                         logging.info(f"Loaded credentials {path}")
-
-                        # Extract service_account_email
-                        with open(path, 'r') as f:
-                            creds = json.load(f)
-                            self.service_account_email = creds.get('client_email')
-                        logging.info(f"Service account email: {self.service_account_email}")
-
                         break
 
                     except FileNotFoundError:

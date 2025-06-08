@@ -6,7 +6,7 @@ import logging
 from cysystemd.daemon import notify, Notification
 from walletwatcher.pidmanager import PidManager
 from walletwatcher.firebase import Firebase, FirebaseInitError, FirebaseValueError
-from walletwatcher.bitcoin_wallet import BitcoinWallet, BitcoinWalletValueError, BitcoinWalletInitError
+from walletwatcher.bitcoin_wallet import BitcoinWallet, BitcoinWalletValueError, BitcoinWalletInitError, BitcoinWalletStatus
 
 class WalletWatcher:
     def __init__(self):
@@ -58,10 +58,16 @@ async def async_main():
     async def heartbeat_task(firebase, bitcoin):
         while watcher.is_watching:
             try:
-                if bitcoin.is_scanning:
+                if bitcoin.status == BitcoinWalletStatus.INITIALISING:
+                    notificationBody = "Initialising"
+                    notificationColor =  "#FFA500"
+                elif bitcoin.status == BitcoinWalletStatus.SCANNING:
                     notificationBody = "Scanning"
                     notificationColor =  "#FFA500"
-                else:
+                elif bitcoin.status == BitcoinWalletStatus.RPC_FAILURE:
+                    notificationBody = "RPC Failure"
+                    notificationColor =  "#FF0000"
+                elif bitcoin.status == BitcoinWalletStatus.OK:
                     notificationBody = "Watching"
                     notificationColor =  "#00FF00"
 

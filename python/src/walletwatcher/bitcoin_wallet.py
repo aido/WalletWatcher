@@ -2,6 +2,7 @@ import asyncio
 import aiohttp
 import base64
 import logging
+from enum import Enum, auto
 from configparser import NoSectionError, NoOptionError
 from walletwatcher.config import get as config_get
 
@@ -14,6 +15,12 @@ class BitcoinWalletInitError(RuntimeError):
 class BitcoinWalletValueError(ValueError):
     """Custom exception for BitcoinWallet related ValueErrors."""
     pass
+
+class BitcoinWalletStatus(Enum):
+    INITIALISING = auto()
+    SCANNING = auto()
+    OK = auto()
+    RPC_FAILURE = auto()
 
 class BitcoinWallet:
     def __init__(self):
@@ -46,7 +53,7 @@ class BitcoinWallet:
             self.descriptor = f"{address_type}([{master_fingerprint}/{derivation_path}]{xpub}/0/*)"
             self.rpc_request_id = 1
             self.current_balance = self.previous_balance = 0
-            self.is_scanning = True
+            self.status = BitcoinWalletStatus.INITIALISING
 
         except BitcoinWalletInitError as re:
             logging.error(f"BitcoinWallet initialization failed: {re}")
@@ -92,7 +99,8 @@ class BitcoinWallet:
         rpc_url = f"http://{self.rpc_host}:{self.rpc_port}/wallet/{self.wallet_name}" if method in ["getbalance", "getwalletinfo", "importdescriptors"] else f"http://{self.rpc_host}:{self.rpc_port}"
 
         async with aiohttp.ClientSession() as session:
-            for attempt in range(4):
+            num_attempts = 4
+            for attempt in range(num_attempts):
                 try:
                     async with session.post(rpc_url, json=payload, headers=headers) as response:
                         response.raise_for_status()
@@ -112,15 +120,15 @@ class BitcoinWallet:
                             return None
 
                 except aiohttp.ClientConnectionError as e:
-                    logging.error(f"Bitcoin RPC connection failed (attempt {attempt+1}/3): {e}")
+                    logging.error(f"Bitcoin RPC connection failed (attempt {attempt+1}/{num_attempts}): {e}")
                     await asyncio.sleep(2 ** attempt)
 
                 except aiohttp.ClientResponseError as e:
-                    logging.error(f"Bitcoin RPC response error (attempt {attempt+1}/3): {e}")
+                    logging.error(f"Bitcoin RPC response error (attempt {attempt+1}/{num_attempts}): {e}")
                     await asyncio.sleep(2 ** attempt)
 
                 except aiohttp.ClientError as e:
-                    logging.error(f"Bitcoin RPC request failed {attempt+1}/3): {e}")
+                    logging.error(f"Bitcoin RPC request failed {attempt+1}/{num_attempts}): {e}")
                     await asyncio.sleep(2 ** attempt)
 
                 except asyncio.TimeoutError as e: 
@@ -132,6 +140,7 @@ class BitcoinWallet:
                     await asyncio.sleep(2 ** attempt)
 
             logging.error(f"Bitcoin RPC request to {method} failed after multiple retries.")
+            self.status = BitcoinWalletStatus.RPC_FAILURE
             return None
 
     async def _import_descriptor(self):
@@ -289,13 +298,13 @@ class BitcoinWallet:
                 else:
                     logging.warning("Bitcoin wallet is scanning, but progress is unavailable.")
                 self.current_balance = None
-                self.is_scanning = True
+                self.status = BitcoinWalletStatus.SCANNING
                 return None
 
             elif "balance" in wallet_info:
-                self.is_scanning = False
                 self.previous_balance = self.current_balance
                 self.current_balance = wallet_info["balance"]
+                self.status = BitcoinWalletStatus.OK
                 return self.current_balance
 
             logging.error("Bitcoin wallet info does not contain balance.")
